@@ -4,6 +4,19 @@
     <title>Mosho.js Demo</title>
     <link href='http://fonts.googleapis.com/css?family=Ubuntu+Mono|Josefin+Sans|Actor' rel='stylesheet' type='text/css'>
     <link href="css/demo.css" rel="stylesheet" type="text/css">
+    <style type="text/css">
+      .extra-styling {
+        -webkit-border-radius: 16px;
+        -khtml-border-radius: 16px;
+        -moz-border-radius: 16px;
+        -ms-border-radius: 16px;
+        -o-border-radius: 16px;
+        color: #00008b;
+        background: silver;
+        padding: 35px;
+        font-weight: bold;
+      }
+    </style>
   </head>
   <body>
     <div id="mosho">
@@ -116,6 +129,15 @@ mosho.plugin({
     if (next) { next.scale(4) }
   }
 })</pre>
+      </div>
+      <div class="mosho-slide" id="a-useful-styling-trick"
+           data-x=1120 data-y=3240 data-z=-480
+           data-roty=-180>
+        <h2>A useful styling trick</h2>
+        <p class="auto-hide extra-styling">
+          This area is only visible on active slides.
+          Useful when you want to hide some parts of your slide in background.
+        </p>
       </div>
     </div>
   </body>
