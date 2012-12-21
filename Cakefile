@@ -1,10 +1,12 @@
-fs     = require 'fs'
-path   = require 'path'
+fs = require 'fs'
+path = require 'path'
 coffee = require 'coffee-script'
 uglify = require 'uglify-js'
+hammerjs = require 'hammerjs'
 
 coffeeSrcDir = "#{__dirname}/src/coffee"
-jsDistDir    = "#{__dirname}/dist"
+includeSrcDir = "#{__dirname}/src/lib"
+jsDistDir = "#{__dirname}/dist"
 
 
 task 'clean', ->
@@ -16,26 +18,33 @@ task 'clean', ->
 task 'build', ->
   invoke 'clean'
   fs.mkdirSync jsDistDir
-  
+
   coffeeSources = fs.readdirSync(coffeeSrcDir).map (file) ->
     source =
       source: fs.readFileSync("#{coffeeSrcDir}/#{file}").toString()
       file: path.basename file, '.coffee'
     return source
-  
-  jsSources = coffeeSources.map (source) ->
+
+  compiledCoffeeSources = coffeeSources.map (source) ->
     source =
       source: coffee.compile source.source
       file: source.file
     return source
-  
-  jsSources.forEach (source) ->
-    ast = uglify.parser.parse source.source
+
+
+  includeSources = ""
+  fs.readdirSync(includeSrcDir).map (file) ->
+    includeSources += fs.readFileSync("#{includeSrcDir}/#{file}").toString()
+    includeSources += "\n\n"
+
+  compiledCoffeeSources.forEach (source) ->
+    combinedSource = includeSources + source.source
+    ast = uglify.parser.parse combinedSource
     ast = uglify.uglify.ast_mangle ast
     ast = uglify.uglify.ast_squeeze ast
     min = uglify.uglify.gen_code ast
-    
-    fs.writeFileSync "#{jsDistDir}/#{source.file}.js", source.source
+
+    fs.writeFileSync "#{jsDistDir}/#{source.file}.js", combinedSource
     fs.writeFileSync "#{jsDistDir}/#{source.file}.min.js", min
 
 
