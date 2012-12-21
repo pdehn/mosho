@@ -87,40 +87,40 @@ class SceneElement
   constructor: (@el, @parent = null) ->
     @data = @el.dataset
     @transform = transformData @data
-    
+
     @el.id = "mosho-element-#{n}" unless @el.id
     @id = @el.id
-    
+
     css @el,
       position:       'absolute'
       display:        'block'
       transformStyle: 'preserve-3d'
-    
+
     @updateCss()
     @order = n++
     byId[@id] = @
     byOrder.push @
     return
-  
+
   show: (t = null) ->
     return if typeof t is 'string' and (e = @getById(t))?
       e.show()
     else
       false
-  
+
   getById: (id) -> byId[id]
-  
+
   getByOrder: (n, offset = off) ->
     max = byOrder.length - 1
     n += @order if offset
     n -= byOrder.length while n > max
     n += byOrder.length while n < 0
     byOrder[n]
-  
+
   getTransformList: ->
     transforms = [@transform].concat (@parent?.getTransformList() or [])
     return transforms
-  
+
   buildTotalTransform: ->
     transforms = @getTransformList()
     transform =
@@ -136,13 +136,13 @@ class SceneElement
       transform.rotate.y += t.rotate.y
       transform.rotate.z += t.rotate.z
     return transform
-  
+
   buildCssTransform: (camera = off) ->
     return transform3d @buildTotalTransform(), camera
-  
+
   updateCss: ->
     css @el, transform: @buildCssTransform()
-  
+
   translate: (x = 0, y = 0, z = 0, abs = off) ->
     if abs
       @transform.translate = x: x, y: y, z: z
@@ -152,7 +152,7 @@ class SceneElement
       @transform.translate.z += z
     @updateCss()
     return
-  
+
   rotate: (x, y, z, abs = off) ->
     if abs
       @transform.rotate = x: x, y: y, z: z
@@ -162,7 +162,7 @@ class SceneElement
       @transform.rotate.z += z
     @updateCss()
     return
-  
+
   scale: (s = 1, abs = off) ->
     if abs
       @transform.scale = s
@@ -170,7 +170,7 @@ class SceneElement
       @transform.scale *= s
     @updateCss()
     return
-  
+
 class SlideGroup extends SceneElement
   constructor: (@el, @parent = null) ->
     super @el, @parent
@@ -180,9 +180,9 @@ class SlideGroup extends SceneElement
         new Slide el, me
       else if el?.classList?.contains 'mosho-group'
         new SlideGroup el, me
-  
+
   updateCss: -> return
-  
+
   show: (t) ->
     return true if super t
     return @getByOrder(1, on).show()
@@ -200,14 +200,14 @@ class Slide extends SceneElement
   active = null
   slides = []
   n = 0
-  
+
   constructor: (@el, @parent = null) ->
     @el.classList.add 'mosho-inactive'
     @slidesOrder = n++
     slides.push @
     super @el, @parent
     @updateCss()
-  
+
   show: (t) ->
     return on if super t
     return on if @ == @getActiveSlide()
@@ -230,37 +230,37 @@ class Slide extends SceneElement
       prevSlide: prevSlide
       nextSlide: @
     return on
-  
+
   getActiveSlide: ->
     return active
-  
+
   getPrevSlide: ->
     return if @data.prev?
       @getById @data.prev
     else
       slides[if @slidesOrder == 0 then slides.length-1 else @slidesOrder-1]
-  
+
   getNextSlide: ->
     return if @data.next?
       @getById @data.next
     else
       slides[if @slidesOrder == slides.length-1 then 0 else @slidesOrder+1]
-  
+
   updateCss: ->
     css @el, transform: 'translate(-50%,-50%) ' + @buildCssTransform()
-  
+
 
 init = ->
   return if initialized
   fireDocEvent "mosho:pre-init"
-  
+
   root = document.createElement 'div'
   root.id = 'mosho-container'
-  
+
   css document.body,
     height: '100%'
     overflow: 'hidden'
-  
+
   css root,
     position: "absolute"
     transformOrigin: "0% 0%"
@@ -269,21 +269,32 @@ init = ->
     left: "50%"
     transform: perspective(4000)
     transformStyle: "preserve-3d"
-  
+
   camera = document.getElementById 'mosho'
   camera.id = 'mosho-camera'
   camera = new Camera camera
-  
+
   document.body.appendChild root
   root.appendChild camera.el
-  
+
   unless camera.show unHash window.location.hash
     camera.getByOrder(0).show()
-  
+
   initListeners()
+  initTouchListeners()
   initialized = on
-  
+
   fireDocEvent "mosho:post-init"
+  return
+
+initTouchListeners = ->
+  hammer = new Hammer(document.documentElement)
+  hammer.onswipe = (swipeEvent) ->
+    if (swipeEvent.direction == "left")
+      mosho.next()
+    if (swipeEvent.direction == "right")
+      mosho.prev()
+    return
   return
 
 initListeners = ->
@@ -291,13 +302,13 @@ initListeners = ->
     Slide.prototype
       .getById(unHash window.location.hash)
       .show()
-  
+
   addDocListener 'keydown', (e) ->
     switch e.keyCode
       when 37, 38, 9, 32, 39, 40
         e.preventDefault()
     return
-  
+
   addDocListener 'keyup', (e) ->
     switch e.keyCode
       when 37, 38
